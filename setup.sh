@@ -21,6 +21,32 @@ install_brew() {
     if ! command -v brew 1>/dev/null 2>&1; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
+
+    if [ "$(uname -m)" = "arm64" ]; then
+        brew_prefix="/opt/homebrew"
+    else
+        brew_prefix="/usr/local"
+    fi
+    case $(basename "$SHELL") in
+    "bash")
+        brew_profile="$HOME/.bash_profile"
+        ;;
+    "zsh")
+        brew_profile="$HOME/.zprofile"
+        ;;
+    *)
+        brew_profile="$HOME/.profile"
+        ;;
+    esac
+    if ! grep -q "$brew_prefix/bin/brew shellenv" "$brew_profile"; then
+        local content="eval \"\$(${brew_prefix}/bin/brew shellenv)\""
+        if [ -f "$brew_profile" ]; then
+            echo -e "$content" >> "$brew_profile"
+        else
+            echo -e "$content" > "$brew_profile"
+        fi
+    fi
+    eval "$(${brew_prefix}/bin/brew shellenv)"
 }
 
 install_formulae() {
